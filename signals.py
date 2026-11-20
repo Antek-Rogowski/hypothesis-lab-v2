@@ -46,7 +46,7 @@ def momentum(df, window, k):
     return pd.Series(signal, index=price.index)
 
 def shock_rebound(df, x_pct):
-    # shock_rebound -  market correction.
+    # shock_rebound -  “after a large one-day move, the price tends to partly reverse.
 
     #Args:
         # df: price table with a close price column and dates as index.
@@ -56,11 +56,13 @@ def shock_rebound(df, x_pct):
         # Series with the same dates as df:
         # 1 -> long  (price fell, expect a rise),
         # -1 -> short (price raised, expect a fall),
+        # 0 -> no signal.
+
     price = df["Close"]
     x = x_pct/100
     diff = price/price.shift(1) - 1
 
-    signal = np.select([diff >= x, diff <= -x], [1,-1], default=0)
+    signal = np.select([diff >= x, diff <= -x], [-1, 1], default=0)
     return pd.Series(signal, index=price.index)
 
 if __name__ == "__main__":
