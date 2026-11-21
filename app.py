@@ -17,7 +17,7 @@ if "result" not in st.session_state:
     st.session_state["result"] = None     # last computed result, shown until the next Run
 
 
-@st.cache_data
+@st.cache_data(ttl=3600)
 def load(symbol):
     # cached: the file is read once per symbol, not on every rerun
     return data.load_data(symbol)
