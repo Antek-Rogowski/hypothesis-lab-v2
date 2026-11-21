@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from dane import load_data
+from data import load_data
 
 def mean_reversion(df, window, k):
     # Mean_reversion -  when the price moves unusually far from its recent average,

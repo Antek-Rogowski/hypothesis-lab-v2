@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import binomtest
 
-from dane import load_data
+from data import load_data
 import signals
 
 # Event selection
