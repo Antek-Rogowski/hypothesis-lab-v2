@@ -1,0 +1,26 @@
+name: Update data
+
+on:
+  schedule:
+    - cron: "45 22 * * 1-5"   # 22:45 UTC, Monday to Friday (after the US market close)
+  workflow_dispatch:          # adds a "Run workflow" button for manual runs
+
+permissions:
+  contents: write             # allows the job to push the updated data files
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4          # get the repository
+      - uses: actions/setup-python@v5      # install Python
+        with:
+          python-version: "3.11"
+      - run: pip install pandas yfinance pyarrow
+      - run: python data.py                
+      - name: Commit if data changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data
+          git diff --cached --quiet || (git commit -m "Daily data update" && git push)
