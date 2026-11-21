@@ -76,4 +76,3 @@ if __name__ == "__main__":
 
     print(f'Short: {short_count}')
     print(f'Long: {long_count}')
-
