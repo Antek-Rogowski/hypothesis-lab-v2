@@ -17,12 +17,12 @@ if "result" not in st.session_state:
     st.session_state["result"] = None     # last computed result, shown until the next Run
 
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=3600)                  # second test does not import file again. Reset after 1h
 def load(symbol):
     return data.load_data(symbol)
 
 
-# --- Sidebar: choices ---------------------------------------------------------
+# Sidebar: choices ############################################################################################
 with st.sidebar:
     instrument = st.selectbox("Instrument", data.SYMBOLS)
     hypothesis = st.selectbox("Hypothesis", ["Mean Reversion", "Momentum", "Shock Rebound"])
@@ -46,10 +46,10 @@ with st.sidebar:
     horizon = st.number_input("Horizon (sessions)", value=5, step=1, min_value=1)
     run = st.button("Run", type="primary")
 
-
+# One dict with all current settings
 config = {"instrument": instrument, "hypothesis": hypothesis, **params, "horizon": horizon}
 
-# --- After clicking: compute and store ----------------------------------------
+# After clicking run ############################################################################################
 if run:
     df = load(instrument)
 
@@ -68,7 +68,7 @@ if run:
 
     st.session_state["result"] = {"res": res, "config": config, "prices": df["Close"]}
 
-# --- Show the last result -----------------------------------------------------
+# Show the last result -----------------------------------------------------
 stored = st.session_state["result"]
 
 if stored is None:
