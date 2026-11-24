@@ -88,8 +88,6 @@ if res["events"] == 0:
     st.info("The hypothesis produced no events with these settings.")
     st.stop()
 
-# multiple testing: each extra trial raises the chance of a lucky result,
-# so the p-value is multiplied by the number of trials (Bonferroni correction)
 trials = len(st.session_state["history"])
 p_adj = min(1.0, res["p_value"] * trials)
 
