@@ -1,5 +1,8 @@
+# signals -> hyphotesis grade
+
 import pandas as pd
 import numpy as np
+# p-value test
 from scipy.stats import binomtest
 
 from data import load_data
@@ -7,19 +10,24 @@ import signals
 
 # Event selection
 def select_events(sig, horizon):
+    print(sig)
     values = sig.to_numpy()
     result = []
     earliest_possible = 0
 
-    # One session a time, with signal raised and horizon within the scope
+    print(values)
+    # Filtering raised flags into valid signals (3 days horizon, 1 type of signal at time, edge dates)
+    # at this stage only flags, without dates
     for i in range(len(values)):
         if values[i] != 0 and i >= earliest_possible and i + horizon <= len(values) - 1:
             result.append(i)              
             earliest_possible = i + horizon
+    # idx of selected flags
     return result
 
 # Builds a table of events
 def build_trades(df, sig, horizon):
+    # Imports: list of selected events idx, list of prices, list of signals and combines it into one list of dicts
     prices = df["Close"].to_numpy()
     sides = sig.to_numpy()
     rows = []
@@ -40,41 +48,44 @@ def build_trades(df, sig, horizon):
             "return": ret,
             "hit": ret > 0,
         })
-
+    # list of dicts -> table
     return pd.DataFrame(rows)
 
-# Baseline: hit rate of the same long/short mix if we entered on every possible day
+# Hit rate if entered on random date with the same mix of long/short as a rule
 def baseline(df, trades, horizon):
     price = df["Close"]
-    ret = price.shift(-horizon) / price - 1     # future return over `horizon` sessions
-    ret = ret.dropna()                          # last `horizon` days have no future price
+    # future return over `horizon` sessions
+    ret = price.shift(-horizon) / price - 1
+    # drop of NaaN     
+    ret = ret.dropna()                          
 
-    p_long = (ret > 0).mean()                   # share of days after which a long would win
-    p_short = (ret < 0).mean()                  # share of days after which a short would win
+    p_long = (ret > 0).mean()                   # share of days when long would win
+    p_short = (ret < 0).mean()                  # share of days when short would win
 
-    n_long = (trades["side"] == 1).sum()        # how many longs the rule made
-    n_short = (trades["side"] == -1).sum()      # how many shorts the rule made
+    n_long = (trades["side"] == 1).sum()        # how many longs the rule made, calculated only on selected signals
+    n_short = (trades["side"] == -1).sum()      # how many shorts the rule made, calclulated only on selected signals
 
     # weighted average: same long/short mix as the rule
     return (n_long * p_long + n_short * p_short) / (n_long + n_short)                     
 
-# Measuremnt how likely result is to be a random thing
+# Measuremnt how likely result is to be random
 def p_value(trades, base):
     k = trades["hit"].sum()                         # number of hits (True counts as 1)
     n = len(trades)                                 # number of events (rows in trades)
-    return binomtest(k=k, n=n, p=base).pvalue       # p < 0,05 => rule is better than random
+    return binomtest(k=k, n=n, p=base).pvalue       # p < 0,05 => rule not random
 
-# Full evaluation of one hypothesis: events, hit rate, baseline, p-value
+# Full evaluation of one hypothesis
 def run_hypothesis(df, sig, horizon):
-    trades = build_trades(df, sig, horizon)
-                     
-    if len(trades) == 0:                    # No events: return the same type (dict), so the app can check result["events"] == 0
+
+    trades = build_trades(df, sig, horizon)                 
+    if len(trades) == 0:                    
         return {"events": 0}
 
     base = baseline(df, trades, horizon)
     hit_rate = trades["hit"].mean()
     p = p_value(trades, base)               
 
+    # Always return dict, even when 0 events, easy display in app
     return {
         "events": len(trades),
         "n_long": (trades["side"] == 1).sum(),
@@ -89,8 +100,8 @@ def run_hypothesis(df, sig, horizon):
 
 
 if __name__ == "__main__":
+    # Test run
     df = load_data("GLD")
-
     result = run_hypothesis(df, signals.mean_reversion(df, 20, 2), 5)
     for key, value in result.items():
         if key != "trades":
