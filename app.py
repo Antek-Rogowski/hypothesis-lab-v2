@@ -12,14 +12,13 @@ st.caption("Test simple trading rules on real daily data: hit rate vs. random en
 
 # session_state survives reruns of the script (normal variables do not)
 if "history" not in st.session_state:
-    st.session_state["history"] = []      # list of distinct trials (settings) in this session
+    st.session_state["history"] = []      # list of distinct settings in this session
 if "result" not in st.session_state:
     st.session_state["result"] = None     # last computed result, shown until the next Run
 
 
 @st.cache_data(ttl=3600)
 def load(symbol):
-    # cached: the file is read once per symbol, not on every rerun
     return data.load_data(symbol)
 
 
@@ -28,7 +27,7 @@ with st.sidebar:
     instrument = st.selectbox("Instrument", data.SYMBOLS)
     hypothesis = st.selectbox("Hypothesis", ["Mean Reversion", "Momentum", "Shock Rebound"])
 
-    # parameters depend on the chosen hypothesis
+    
     if hypothesis == "Mean Reversion":
         st.caption("Long when the price is k standard deviations below its W-day mean, short when above.")
         window = st.number_input("Window (sessions)", value=20, step=1, min_value=2)
@@ -47,7 +46,7 @@ with st.sidebar:
     horizon = st.number_input("Horizon (sessions)", value=5, step=1, min_value=1)
     run = st.button("Run", type="primary")
 
-# one dictionary describing the current settings (used for the history and to detect changes)
+
 config = {"instrument": instrument, "hypothesis": hypothesis, **params, "horizon": horizon}
 
 # --- After clicking: compute and store ----------------------------------------
@@ -63,7 +62,7 @@ if run:
 
     res = engine.run_hypothesis(df, sig, horizon)
 
-    # trial counter: the same settings clicked twice count as one trial
+    # trial counter
     if config not in st.session_state["history"]:
         st.session_state["history"].append(config)
 
@@ -74,7 +73,7 @@ stored = st.session_state["result"]
 
 if stored is None:
     st.info("Choose an instrument, a hypothesis and its parameters in the sidebar, then click Run.")
-    st.stop()                              # nothing more to draw
+    st.stop()                              
 
 res, cfg, prices = stored["res"], stored["config"], stored["prices"]
 
