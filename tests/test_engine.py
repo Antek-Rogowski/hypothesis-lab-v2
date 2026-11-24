@@ -15,20 +15,16 @@ def exercise_df():
 # --- select_events ----------------------------------------------------------
 
 def test_select_events_basic():
-    # day 1 long (exit day 4), day 2 skipped (position open),
-    # day 4 short (exit day 7), day 6 skipped, day 8 exit would be day 11 -> no data
     df = exercise_df()
     assert select_events(df["Signal"], 3) == [1, 4]
 
 
 def test_select_events_exit_must_fit():
-    # only 7 sessions (0-6): the short from day 4 would exit on day 7 -> outside the data
     df = exercise_df().iloc[:7]
     assert select_events(df["Signal"], 3) == [1]
 
 
 def test_select_events_horizon_1():
-    # horizon 1: every position is closed the next day, so every signal day fits
     df = exercise_df()
     assert select_events(df["Signal"], 1) == [1, 2, 4, 6, 8]
 
